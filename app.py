@@ -14,9 +14,9 @@ st.markdown("Aplicación conectada a Google Sheets de forma gratuita.")
 def cargar_hojas():
     try:
         # Reemplaza estas URLs con los enlaces CSV públicos de tus 3 hojas de Google
-        url_h1 = "URL_CSV_DE_LA_HOJA_1"
-        url_h2 = "URL_CSV_DE_LA_HOJA_2"
-        url_h3 = "URL_CSV_DE_LA_HOJA_3"
+        url_h1 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRuAO-zWYd8I3xyGv6OxKCCsJfZXZkOAodGoDCbLa4QsoALS2zz7vvAH-Q2W2GOHhmVwrm-jOp9UGs4/pub?output=csv"
+        url_h2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ5sg165ElA3X6apKcqmuCf2P839-tL_Kq-0lDJkAv16-llmEpLJ_w121caldrFho5HLH_EfqfYUIH/pub?output=csv"
+        url_h3 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvaRX7DHqmxEkvH8ZqNfKXyF24ganA4VKJ2ss3UFYeQ08iEUd2ipsgkPlUwl7X1PltSSFBtttT_a4/pub?output=csv"
         
         df1 = pd.read_csv(url_h1)
         df2 = pd.read_csv(url_h2)
