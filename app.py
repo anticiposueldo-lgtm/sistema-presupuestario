@@ -1,63 +1,36 @@
+import os
+import pandas as pd
+import streamlit as st
+import io
+import requests
+import time
+
+# Configuración de la página
+st.set_page_config(page_title="Evaluación de Ejecución Presupuestaria 2026", layout="wide")
+
 # =====================================================================
-# SECCIÓN 21: REPORTE DE EJECUCIÓN OFICIAL (TODAS LAS SOLAPAS)
+# CONEXIÓN Y LECTURA ROBUSTA DESDE GOOGLE SHEETS
 # =====================================================================
-elif opcion_menu == "📈 REPORTE DE EJECUCIÓN OFICIAL":
-    st.subheader("📈 Módulo de Ejecución Presupuestaria - Reportes Oficiales")
+SPREADSHEET_ID = "1rDFoL0KPCiqmo1pBobrRuibAwtT9anRPZPLgjrPCBWo"
+GID_EVALUACION = "162541600"
 
-    df_ejec_completo = leer_datos_gsheet(URL_READ_EJECUCION)
+URL_READ_EJECUCION = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv&gid={GID_EVALUACION}"
 
-    if df_ejec_completo.empty:
-        st.warning("⚠️ No se pudieron cargar los datos de la hoja de ejecución.")
-    else:
-        df_ejec_completo.columns = [str(c).strip().upper() for c in df_ejec_completo.columns]
-        cols_e = df_ejec_completo.columns.tolist()
-
-        def limpiar_monto_val(val):
-            if pd.isna(val): return 0.0
-            s = str(val).replace("$", "").replace(" ", "").strip()
-            if not s or s.lower() == "nan": return 0.0
-            if "," in s and "." in s:
-                s = s.replace(".", "").replace(",", ".")
-            elif "," in s:
-                s = s.replace(",", ".")
-            try:
-                return float(s)
-            except Exception:
-                return 0.0
-
-        c_sec_k = cols_e[0] if len(cols_e) > 0 else "SECRETARIA"
-        c_sub_k = cols_e[1] if len(cols_e) > 1 else "SUBSECRETARÍA"
-        c_dest_k = cols_e[2] if len(cols_e) > 2 else "DESTINO"
-        c_obj = cols_e[3] if len(cols_e) > 3 else "OBJETO_GASTO" # Columna D
-        c_partida = cols_e[4] if len(cols_e) > 4 else cols_e[5] # Columna E (Imputación)
-        c_padre = cols_e[13] if len(cols_e) > 13 else cols_e[4] # Columna N (Cuenta Padre)
-
-        c_pres = cols_e[6] if len(cols_e) > 6 else cols_e[6]
-        c_dev = cols_e[7] if len(cols_e) > 7 else cols_e[6]
-        c_ejec = cols_e[8] if len(cols_e) > 8 else cols_e[6]
-        c_mod = cols_e[9] if len(cols_e) > 9 else cols_e[6]
-        c_saldo = cols_e[10] if len(cols_e) > 10 else cols_e[6]
-
-        df_validas = df_ejec_completo[
-            df_ejec_completo[c_obj].notna() & 
-            (df_ejec_completo[c_obj].astype(str).str.strip() != "") & 
-            (df_ejec_completo[c_obj].astype(str).str.upper() != "NAN") &
-            df_ejec_completo[c_padre].notna() & 
-            (df_ejec_completo[c_padre].astype(str).str.strip() != "") & 
-            (df_ejec_completo[c_padre].astype(str).str.upper() != "NAN") &
-            df_ejec_completo[c_partida].notna() & 
-            (df_ejec_completo[c_partida].astype(str).str.strip() != "") & 
-            (df_ejec_completo[c_partida].astype(str).str.upper() != "NAN")
-        ].copy()
-
-        tab_ejec_1, tab_ejec_2, tab_ejec_3, tab_ejec_4, tab_ejec_5, tab_ejec_6 = st.tabs([
-            "📊 Resumen por Destino (Matriz)",
-            "🏛️ Desglose Escalonado por Destino",
-            "📦 Totales por Objeto del Gasto",
-            "🔍 Buscador y Control de Saldos",
-            "📄 Exportación y Firmas (PDF)",
-            "🏛️ Reporte por Finalidad y Función"
-        ])
+@st.cache_data(ttl=60)
+def leer_datos_gsheet(url):
+    try:
+        resp = requests.get(url, timeout=30)
+        if resp.status_code == 200:
+            df = pd.read_csv(io.StringIO(resp.text))
+            if not df.empty:
+                df = df.fillna("")
+            return df
+        else:
+            st.error(f"⚠️ No se pudo acceder al Sheet (Código HTTP: {resp.status_code})")
+            return pd.DataFrame()
+    except Exception as e:
+        st.warning(f"Error de conexión con Google Sheets: {e}")
+        return pd.DataFrame()
 
         # -------------------------------------------------------------
         # SOLAPA 1: MATRIZ DE DESTINOS VS OBJETOS
